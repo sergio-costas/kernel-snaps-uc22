@@ -2,6 +2,8 @@ DPKG_ARCH := $(shell dpkg --print-architecture)
 RELEASE := $(shell lsb_release -c -s)
 ENV := DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true LC_ALL=C LANG=C
 
+MIRROR := ftpmaster.internal/ubuntu
+
 ifneq (,$(findstring amd64,$(DPKG_ARCH)))
 PACKAGE := linux-signed-generic
 else ifneq (,$(findstring i386,$(DPKG_ARCH)))
@@ -17,6 +19,10 @@ install : KVERS = $(shell ls -1 chroot/boot/vmlinuz-*| tail -1 |sed 's/^.*vmlinu
 all:
 	debootstrap --variant=minbase $(RELEASE) chroot
 	cp /etc/apt/sources.list chroot/etc/apt/sources.list
+	if [ "$(PROPOSED)" = "true" ]; then \
+	  echo "deb http://$(MIRROR) $(RELEASE)-proposed main restricted" >> chroot/etc/apt/sources.list; \
+	  echo "deb http://$(MIRROR) $(RELEASE)-proposed universe" >> chroot/etc/apt/sources.list; \
+	fi
 	mkdir -p chroot/etc/initramfs-tools/conf.d
 	echo "COMPRESS=lzma" >chroot/etc/initramfs-tools/conf.d/ubuntu-core.conf
 	$(ENV) chroot chroot apt-get -y update
