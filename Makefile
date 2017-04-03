@@ -9,7 +9,7 @@ PACKAGE := linux-signed-generic
 else ifneq (,$(findstring i386,$(DPKG_ARCH)))
 PACKAGE := linux-generic
 else ifneq (,$(findstring armhf,$(DPKG_ARCH)))
-PACKAGE := linux-image-raspi2 raspberrypi-wireless-firmware
+PACKAGE := linux-image-raspi2 raspberrypi-wireless-firmware bluez-firmware
 else ifneq (,$(findstring arm64,$(DPKG_ARCH)))
 PACKAGE := linux-image-snapdragon linux-firmware-snapdragon
 endif
