@@ -5,13 +5,13 @@ ENV := DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true LC_ALL=C 
 MIRROR := ftpmaster.internal/ubuntu
 
 ifneq (,$(findstring amd64,$(DPKG_ARCH)))
-PACKAGE := linux-signed-generic
+PACKAGE ?= linux-signed-generic
 else ifneq (,$(findstring i386,$(DPKG_ARCH)))
-PACKAGE := linux-generic
+PACKAGE ?= linux-generic
 else ifneq (,$(findstring armhf,$(DPKG_ARCH)))
-PACKAGE := linux-image-raspi2 raspberrypi-wireless-firmware bluez-firmware
+PACKAGE ?= linux-image-raspi2 raspberrypi-wireless-firmware bluez-firmware
 else ifneq (,$(findstring arm64,$(DPKG_ARCH)))
-PACKAGE := linux-image-snapdragon linux-firmware-snapdragon
+PACKAGE ?= linux-image-snapdragon linux-firmware-snapdragon
 endif
 
 install : KVERS = $(shell ls -1 chroot/boot/vmlinuz-*| tail -1 |sed 's/^.*vmlinuz-//;s/.efi.signed$$//')
