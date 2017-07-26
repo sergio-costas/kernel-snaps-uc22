@@ -4,15 +4,27 @@ ENV := DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true LC_ALL=C 
 
 MIRROR := ftpmaster.internal/ubuntu
 
-ifneq (,$(findstring amd64,$(DPKG_ARCH)))
-PACKAGE ?= linux-signed-generic
-else ifneq (,$(findstring i386,$(DPKG_ARCH)))
-PACKAGE ?= linux-generic
-else ifneq (,$(findstring armhf,$(DPKG_ARCH)))
-PACKAGE ?= linux-image-raspi2 raspberrypi-wireless-firmware bluez-firmware
-else ifneq (,$(findstring arm64,$(DPKG_ARCH)))
-PACKAGE ?= linux-image-snapdragon linux-firmware-snapdragon
+ifeq "$(strip $(KERNEL))" ""
+$(error KERNEL package name is missing, abort)
 endif
+
+# rewriting variables passed from the outside environment doesn't work in LP,
+# so use KERNELDEB as a temporary local variable to hold the kernel pkg name
+KERNELDEB := $(KERNEL)=$(SNAPCRAFT_PROJECT_VERSION)
+
+# linux-pc-image is a meta package used to indicate either
+# linux-signed-image-generic or linux-image-generic, depending on the building
+# architecture (amd64 or i386), it's invalid kernel name for any other arch
+ifneq (,$(findstring linux-pc-image,$(KERNELDEB)))
+ifneq (,$(findstring amd64,$(DPKG_ARCH)))
+KERNELDEB := $(subst linux-pc-image,linux-signed-image-generic,$(KERNELDEB))
+else ifneq (,$(findstring i386,$(DPKG_ARCH)))
+KERNELDEB := $(subst linux-pc-image,linux-image-generic,$(KERNELDEB))
+else
+$(error linux-pc-image is a meta package only used in i386 or amd64, abort)
+endif
+endif
+
 
 install : KVERS = $(shell ls -1 chroot/boot/vmlinuz-*| tail -1 |sed 's/^.*vmlinuz-//;s/.efi.signed$$//')
 
@@ -30,7 +42,7 @@ all:
 	$(ENV) chroot chroot apt-get -y --allow-unauthenticated install initramfs-tools-ubuntu-core linux-firmware xz-utils
 	mount --bind /proc chroot/proc
 	mount --bind /sys chroot/sys
-	$(ENV) chroot chroot apt-get -y --allow-unauthenticated install $(PACKAGE)
+	$(ENV) chroot chroot apt-get -y --allow-unauthenticated install $(KERNELDEB) $(PKGS)
 	umount chroot/sys
 	umount chroot/proc
 
