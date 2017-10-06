@@ -25,6 +25,24 @@ $(error linux-pc-image is a meta package only used in i386 or amd64, abort)
 endif
 endif
 
+define APTPREF
+Package: *
+Pin: release a=$(RELEASE);
+Pin-Priority: 700
+
+Package: *
+Pin: release a=$(RELEASE)-updates
+Pin-Priority: 700
+
+Package: *
+Pin: release a=$(RELEASE)-security
+Pin-Priority: 700
+
+Package: *
+Pin: release a=$(RELEASE)-proposed
+Pin-Priority: 650
+endef
+export APTPREF
 
 install : KVERS = $(shell ls -1 chroot/boot/vmlinuz-*| tail -1 |sed 's/^.*vmlinuz-//;s/.efi.signed$$//')
 
@@ -35,6 +53,7 @@ all:
 	if [ "$(PROPOSED)" = "true" ]; then \
 	  echo "deb http://$(MIRROR) $(RELEASE)-proposed main restricted" >> chroot/etc/apt/sources.list; \
 	  echo "deb http://$(MIRROR) $(RELEASE)-proposed universe" >> chroot/etc/apt/sources.list; \
+	  echo "$${APTPREF}" > chroot/etc/apt/preferences.d/01proposedkernel; \
 	fi
 	mkdir -p chroot/etc/initramfs-tools/conf.d
 	echo "COMPRESS=lzma" >chroot/etc/initramfs-tools/conf.d/ubuntu-core.conf
