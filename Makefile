@@ -10,7 +10,7 @@ endif
 
 # rewriting variables passed from the outside environment doesn't work in LP,
 # so use KERNELDEB as a temporary local variable to hold the kernel pkg name
-KERNELDEB := $(KERNEL)=$(SNAPCRAFT_PROJECT_VERSION)
+KERNELDEB := $(KERNEL)
 
 # linux-pc-image is a meta package used to indicate either
 # linux-signed-image-generic or linux-image-generic, depending on the building
@@ -26,21 +26,21 @@ endif
 endif
 
 define APTPREF
-Package: *
-Pin: release a=$(RELEASE);
-Pin-Priority: 700
+Package: linux-firmware
+Pin: release a=$(RELEASE)-proposed
+Pin-Priority: 400
 
-Package: *
-Pin: release a=$(RELEASE)-updates
-Pin-Priority: 700
-
-Package: *
-Pin: release a=$(RELEASE)-security
-Pin-Priority: 700
+Package: linux-*
+Pin: release a=$(RELEASE)-proposed
+Pin-Priority: 750
 
 Package: *
 Pin: release a=$(RELEASE)-proposed
-Pin-Priority: 650
+Pin-Priority: 400
+
+Package: *
+Pin: release a=$(RELEASE)*
+Pin-Priority: 700
 endef
 export APTPREF
 
@@ -49,7 +49,7 @@ install : KVERS = $(shell ls -1 chroot/boot/vmlinuz-*| tail -1 |sed 's/^.*vmlinu
 all:
 	debootstrap --variant=minbase $(RELEASE) chroot
 	cp /etc/apt/sources.list chroot/etc/apt/sources.list
-	echo "deb http://ppa.launchpad.net/snappy-dev/image/ubuntu xenial main" >> chroot/etc/apt/sources.list
+	echo "deb http://ppa.launchpad.net/snappy-dev/image/ubuntu $(RELEASE) main" >> chroot/etc/apt/sources.list
 	if [ "$(PROPOSED)" = "true" ]; then \
 	  echo "deb http://$(MIRROR) $(RELEASE)-proposed main restricted" >> chroot/etc/apt/sources.list; \
 	  echo "deb http://$(MIRROR) $(RELEASE)-proposed universe" >> chroot/etc/apt/sources.list; \
