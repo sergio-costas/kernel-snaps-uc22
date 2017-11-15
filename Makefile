@@ -8,9 +8,12 @@ ifeq "$(strip $(KERNEL))" ""
 $(error KERNEL package name is missing, abort)
 endif
 
+ABI := $(shell echo $(SNAPCRAFT_PROJECT_VERSION) | cut -f1-3 -d".")
+
 # rewriting variables passed from the outside environment doesn't work in LP,
 # so use KERNELDEB as a temporary local variable to hold the kernel pkg name
 KERNELDEB := $(KERNEL)
+KERNELPRE := linux-image-$(ABI)
 
 # linux-pc-image is a meta package used to indicate either
 # linux-signed-image-generic or linux-image-generic, depending on the building
@@ -18,6 +21,7 @@ KERNELDEB := $(KERNEL)
 ifneq (,$(findstring linux-pc-image,$(KERNELDEB)))
 ifneq (,$(findstring amd64,$(DPKG_ARCH)))
 KERNELDEB := $(subst linux-pc-image,linux-signed-image-generic,$(KERNELDEB))
+KERNELPRE := linux-signed-image-$(ABI)
 else ifneq (,$(findstring i386,$(DPKG_ARCH)))
 KERNELDEB := $(subst linux-pc-image,linux-image-generic,$(KERNELDEB))
 else
@@ -44,6 +48,7 @@ Pin-Priority: 700
 endef
 export APTPREF
 
+versioncheck: KIMGDEB = $(shell chroot chroot apt-cache depends $(KERNELDEB) | awk '/$(KERNELPRE)/ {print $$2}')
 install : KVERS = $(shell ls -1 chroot/boot/vmlinuz-*| tail -1 |sed 's/^.*vmlinuz-//;s/.efi.signed$$//')
 
 all:
@@ -65,7 +70,7 @@ all:
 	umount chroot/sys
 	umount chroot/proc
 
-install:
+install: versioncheck
 	mkdir -p $(DESTDIR)/lib $(DESTDIR)/meta $(DESTDIR)/firmware $(DESTDIR)/modules
 	if [ -f chroot/boot/vmlinu?-*.signed ]; then \
 	  mv chroot/boot/vmlinu?-*.signed $(DESTDIR)/kernel.img; \
@@ -112,3 +117,16 @@ install:
 	cd $(DESTDIR); ln -s kernel.img vmlinuz-$(KVERS)
 	cd $(DESTDIR); ln -s kernel.img vmlinuz
 	cd $(DESTDIR); ln -s initrd.img initrd.img-$(KVERS)
+
+versioncheck:
+	{ \
+	set -e; \
+	echo $(KIMGDEB); \
+	KIMGVER="$$(dpkg --root=chroot -l | awk '/$(KIMGDEB)/ {print $$3}')"; \
+	echo $$KIMGVER; \
+	[ ! $$KIMGVER ] && echo "Unable to extract KIMGVER, exit" && exit 1; \
+	if [ $$KIMGVER != $(SNAPCRAFT_PROJECT_VERSION) ]; then \
+	  echo "Version mismatch:\nInstalled: $$KIMGVER Requested: $(SNAPCRAFT_PROJECT_VERSION)"; \
+	  exit 1; \
+	fi; \
+	}
