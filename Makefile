@@ -63,8 +63,6 @@ all:
 	debootstrap --variant=minbase $(RELEASE) chroot
 	cp /etc/apt/sources.list chroot/etc/apt/sources.list
 	echo "deb http://ppa.launchpad.net/snappy-dev/image/ubuntu $(RELEASE) main" >> chroot/etc/apt/sources.list
-	echo "deb http://ppa.launchpad.net/snappy-dev/image/ubuntu $(RELEASE)-security main" >> chroot/etc/apt/sources.list
-	echo "deb http://ppa.launchpad.net/snappy-dev/image/ubuntu $(RELEASE)-updates main" >> chroot/etc/apt/sources.list
 	if [ "$(PROPOSED)" = "true" ]; then \
 	  echo "deb http://$(MIRROR) $(RELEASE)-proposed main restricted" >> chroot/etc/apt/sources.list; \
 	  echo "deb http://$(MIRROR) $(RELEASE)-proposed universe" >> chroot/etc/apt/sources.list; \
