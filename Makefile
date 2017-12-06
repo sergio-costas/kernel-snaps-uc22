@@ -31,6 +31,14 @@ endif
 
 define APTPREF
 Package: linux-firmware
+Pin: release a=$(RELEASE)-updates
+Pin-Priority: 720
+
+Package: linux-firmware
+Pin: release a=$(RELEASE)-security
+Pin-Priority: 710
+
+Package: linux-firmware
 Pin: release a=$(RELEASE)-proposed
 Pin-Priority: 400
 
@@ -39,16 +47,16 @@ Pin: release a=$(RELEASE)-proposed
 Pin-Priority: 750
 
 Package: *
-Pin: release a=$(RELEASE)-proposed
-Pin-Priority: 400
-
-Package: *
 Pin: release a=$(RELEASE)-updates
 Pin-Priority: 720
 
 Package: *
 Pin: release a=$(RELEASE)-security
 Pin-Priority: 710
+
+Package: *
+Pin: release a=$(RELEASE)-proposed
+Pin-Priority: 400
 
 Package: *
 Pin: release a=$(RELEASE)*
