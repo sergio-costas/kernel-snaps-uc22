@@ -43,6 +43,16 @@ Pin: release a=$(RELEASE)-proposed
 Pin-Priority: 400
 
 Package: *
+Pin: release a=$(RELEASE)*-updates
+Pin-Priority: 720
+endef
+
+Package: *
+Pin: release a=$(RELEASE)*-security
+Pin-Priority: 710
+endef
+
+Package: *
 Pin: release a=$(RELEASE)*
 Pin-Priority: 700
 endef
@@ -55,6 +65,8 @@ all:
 	debootstrap --variant=minbase $(RELEASE) chroot
 	cp /etc/apt/sources.list chroot/etc/apt/sources.list
 	echo "deb http://ppa.launchpad.net/snappy-dev/image/ubuntu $(RELEASE) main" >> chroot/etc/apt/sources.list
+	echo "deb http://ppa.launchpad.net/snappy-dev/image/ubuntu $(RELEASE)-security main" >> chroot/etc/apt/sources.list
+	echo "deb http://ppa.launchpad.net/snappy-dev/image/ubuntu $(RELEASE)-updates main" >> chroot/etc/apt/sources.list
 	if [ "$(PROPOSED)" = "true" ]; then \
 	  echo "deb http://$(MIRROR) $(RELEASE)-proposed main restricted" >> chroot/etc/apt/sources.list; \
 	  echo "deb http://$(MIRROR) $(RELEASE)-proposed universe" >> chroot/etc/apt/sources.list; \
