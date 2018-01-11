@@ -80,6 +80,9 @@ all:
 	echo "COMPRESS=lzma" >chroot/etc/initramfs-tools/conf.d/ubuntu-core.conf
 	$(ENV) chroot chroot apt-get -y update
 	$(ENV) chroot chroot apt-get -y --allow-unauthenticated install initramfs-tools-ubuntu-core linux-firmware xz-utils
+	if [ "$(DPKG_ARCH)" = "amd64" ] || [ "$(DPKG_ARCH)" = "i386" ]; then \
+		$(ENV) chroot chroot apt-get -y --allow-unauthenticated install amd64-microcode intel-microcode ;  \
+	fi
 	mount --bind /proc chroot/proc
 	mount --bind /sys chroot/sys
 	$(ENV) chroot chroot apt-get -y --allow-unauthenticated install $(KERNELDEB) $(PKGS)
