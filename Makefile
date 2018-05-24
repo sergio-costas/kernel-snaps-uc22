@@ -78,7 +78,7 @@ all:
 	fi
 	mkdir -p chroot/etc/initramfs-tools/conf.d
 	echo "COMPRESS=lzma" >chroot/etc/initramfs-tools/conf.d/ubuntu-core.conf
-	$(ENV) chroot chroot apt-get -y update
+	$(ENV) chroot chroot apt-get -y --allow-insecure-repositories update
 	$(ENV) chroot chroot apt-get -y --allow-unauthenticated install initramfs-tools-ubuntu-core linux-firmware xz-utils
 	mount --bind /proc chroot/proc
 	mount --bind /sys chroot/sys
