@@ -15,14 +15,11 @@ ABI := $(shell echo $(SNAPCRAFT_PROJECT_VERSION) | cut -f1-3 -d".")
 KERNELDEB := $(KERNEL)
 KERNELPRE := linux-image-$(ABI)
 
-# linux-pc-image is a meta package used to indicate either
-# linux-signed-image-generic or linux-image-generic, depending on the building
-# architecture (amd64 or i386), it's invalid kernel name for any other arch
+# linux-pc-image is a meta package used to indicate linux-image-generic,
+# depending on the building architecture (amd64 or i386), it's invalid kernel
+# name for any other arch
 ifneq (,$(findstring linux-pc-image,$(KERNELDEB)))
-ifneq (,$(findstring amd64,$(DPKG_ARCH)))
-KERNELDEB := $(subst linux-pc-image,linux-signed-image-generic,$(KERNELDEB))
-KERNELPRE := linux-signed-image-$(ABI)
-else ifneq (,$(findstring i386,$(DPKG_ARCH)))
+ifneq (,$(filter amd64 i386,$(DPKG_ARCH)))
 KERNELDEB := $(subst linux-pc-image,linux-image-generic,$(KERNELDEB))
 else
 $(error linux-pc-image is a meta package only used in i386 or amd64, abort)
