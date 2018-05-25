@@ -99,7 +99,6 @@ install: versioncheck
 	if [ "$(DPKG_ARCH)" = "arm64" ]; then \
 	  mkdir -p $(DESTDIR)/dtbs; \
 	  cp -a chroot/lib/firmware/$(KVERS)/device-tree/* $(DESTDIR)/dtbs/; \
-	  cp chroot/lib/firmware/$(KVERS)/device-tree/qcom/apq8016-sbc-snappy.dtb $(DESTDIR)/dtbs/apq8016-sbc.dtb; \
 	  mkdir -p $(DESTDIR)/firmware/wlan; \
 	  ln -s /run/macaddr0 $(DESTDIR)/firmware/wlan/; \
 	fi
