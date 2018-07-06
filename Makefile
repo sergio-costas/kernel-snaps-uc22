@@ -134,6 +134,7 @@ versioncheck:
 	{ \
 	set -e; \
 	echo $(KIMGDEB); \
+	[ ! $(KIMGDEB) ] && echo "Unable to extract KIMGDEB, exit" && exit 1; \
 	KIMGVER="$$(dpkg --root=chroot -l | awk '/$(KIMGDEB)/ {print $$3}')"; \
 	echo $$KIMGVER; \
 	[ ! $$KIMGVER ] && echo "Unable to extract KIMGVER, exit" && exit 1; \
