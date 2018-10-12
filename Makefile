@@ -75,6 +75,8 @@ all:
 	fi
 	mkdir -p chroot/etc/initramfs-tools/conf.d
 	echo "COMPRESS=lzma" >chroot/etc/initramfs-tools/conf.d/ubuntu-core.conf
+	# LP1794279: vc4-kms-v3d and hardware accelerated framebuffer support
+	echo "i2c-bcm2708" > chroot/etc/initramfs-tools/modules
 	$(ENV) chroot chroot apt-get -y --allow-insecure-repositories update
 	$(ENV) chroot chroot apt-get -y --allow-unauthenticated install initramfs-tools-ubuntu-core linux-firmware xz-utils
 	mount --bind /proc chroot/proc
