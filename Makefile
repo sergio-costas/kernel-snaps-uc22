@@ -77,6 +77,11 @@ all:
 	echo "COMPRESS=lzma" >chroot/etc/initramfs-tools/conf.d/ubuntu-core.conf
 	# LP1794279: vc4-kms-v3d and hardware accelerated framebuffer support
 	echo "i2c-bcm2708" > chroot/etc/initramfs-tools/modules
+	if [ "$(DPKG_ARCH)" = "amd64" ]; then \
+	  echo "nvme" >> chroot/etc/initramfs-tools/modules; \
+	  echo "usbhid" >> chroot/etc/initramfs-tools/modules; \
+	  echo "hid-generic" >> chroot/etc/initramfs-tools/modules; \
+	fi
 	$(ENV) chroot chroot apt-get -y --allow-insecure-repositories update
 	$(ENV) chroot chroot apt-get -y --allow-unauthenticated install initramfs-tools-ubuntu-core linux-firmware xz-utils
 	mount --bind /proc chroot/proc
