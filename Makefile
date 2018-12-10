@@ -98,8 +98,15 @@ install: versioncheck
 	  mv chroot/boot/vmlinu?-* $(DESTDIR)/kernel.img; \
 	fi
 	mv chroot/boot/initrd.img-* $(DESTDIR)/initrd.img
-	# copy meta data into the snap
-	cp -ar chroot/boot/abi-* chroot/boot/System.map-* chroot/boot/config-* $(DESTDIR)/
+	# Copy meta data into the snap. The ABI file itself actually was
+	# not used for anything and just done for completeness. Since new
+	# kernel builds move this into a separate package which is not
+	# installed by default we need to ignore the case when is not
+	# found in the old location.
+	if [ -f chroot/boot/abi-* ]; then \
+	  cp -ar chroot/boot/abi-* $(DESTDIR)/; \
+	fi
+	cp -ar chroot/boot/System.map-* chroot/boot/config-* $(DESTDIR)/
 	# arch dependant stuff
 	# TODO: match against the name in snapcraft.yaml too so we have more fine grained
 	# subarch handling
