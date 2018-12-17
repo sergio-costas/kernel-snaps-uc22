@@ -67,6 +67,9 @@ install : KVERS = $(shell ls -1 chroot/boot/vmlinuz-*| tail -1 |sed 's/^.*vmlinu
 all:
 	debootstrap --variant=minbase $(RELEASE) chroot
 	cp /etc/apt/sources.list chroot/etc/apt/sources.list
+	# install all updates
+	$(ENV) chroot chroot apt-get -y update
+	$(ENV) chroot chroot apt-get -y upgrade
 	echo "deb http://ppa.launchpad.net/snappy-dev/image/ubuntu $(RELEASE) main" >> chroot/etc/apt/sources.list
 	if [ "$(PROPOSED)" = "true" ]; then \
 	  echo "deb http://$(MIRROR) $(RELEASE)-proposed main restricted" >> chroot/etc/apt/sources.list; \
