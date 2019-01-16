@@ -75,7 +75,6 @@ all:
 	  echo "deb http://$(MIRROR) $(RELEASE)-proposed main restricted" >> chroot/etc/apt/sources.list; \
 	  echo "deb http://$(MIRROR) $(RELEASE)-proposed universe" >> chroot/etc/apt/sources.list; \
 	  echo "$${APTPREF}" > chroot/etc/apt/preferences.d/01proposedkernel; \
-	  $(ENV) chroot chroot apt-get -y --allow-insecure-repositories update;\
 	fi
 	mkdir -p chroot/etc/initramfs-tools/conf.d
 	echo "COMPRESS=lzma" >chroot/etc/initramfs-tools/conf.d/ubuntu-core.conf
@@ -86,6 +85,7 @@ all:
 	  echo "usbhid" >> chroot/etc/initramfs-tools/modules; \
 	  echo "hid-generic" >> chroot/etc/initramfs-tools/modules; \
 	fi
+	$(ENV) chroot chroot apt-get -y --allow-insecure-repositories update;\
 	$(ENV) chroot chroot apt-get -y --allow-unauthenticated install initramfs-tools-ubuntu-core linux-firmware xz-utils
 	mount --bind /proc chroot/proc
 	mount --bind /sys chroot/sys
