@@ -19,10 +19,10 @@ KERNELPRE := linux-image-$(ABI)
 # depending on the building architecture (amd64 or i386), it's invalid kernel
 # name for any other arch
 ifneq (,$(findstring linux-pc-image,$(KERNELDEB)))
-ifneq (,$(filter amd64 i386,$(DPKG_ARCH)))
+ifneq (,$(filter amd64 i386 armhf,$(DPKG_ARCH)))
 KERNELDEB := $(subst linux-pc-image,linux-image-generic,$(KERNELDEB))
 else
-$(error linux-pc-image is a meta package only used in i386 or amd64, abort)
+$(error linux-pc-image is a meta package only used in i386, amd64 or armhf, abort)
 endif
 endif
 
