@@ -66,7 +66,7 @@ install : KVERS = $(shell ls -1 chroot/boot/vmlinuz-*| tail -1 |sed 's/^.*vmlinu
 
 all:
 	debootstrap --variant=minbase $(RELEASE) chroot
-	cp /etc/apt/sources.list chroot/etc/apt/sources.list
+	$(ENV) chroot chroot apt-get -y update
 
 	mount --bind /proc chroot/proc
 	mount --bind /sys chroot/sys
@@ -81,6 +81,9 @@ all:
 	$(ENV) chroot chroot apt-get -y install gnupg
 	mkdir --mode=0600 chroot/tmp/gnupg-home
 	cat snappy-dev-image.asc | $(ENV) chroot chroot gpg-agent --homedir /tmp/gnupg-home --daemon apt-key add -
+	# Copy in the sources.list just before modifying it (on build envs this already
+	# seems to be present, otherwise those would not fail).
+	cp /etc/apt/sources.list chroot/etc/apt/sources.list
 	echo "deb http://ppa.launchpad.net/snappy-dev/image/ubuntu $(RELEASE) main" >> chroot/etc/apt/sources.list
 
 	# install all updates
