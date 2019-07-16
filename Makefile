@@ -68,9 +68,24 @@ all:
 	debootstrap --variant=minbase $(RELEASE) chroot
 	cp /etc/apt/sources.list chroot/etc/apt/sources.list
 	# install all updates
-	$(ENV) chroot chroot apt-get -y --allow-insecure-repositories update
-	$(ENV) chroot chroot apt-get -y --allow-unauthenticated upgrade
+	$(ENV) chroot chroot apt-get -y update
+	$(ENV) chroot chroot apt-get -y upgrade
+
+	mount --bind /proc chroot/proc
+	mount --bind /sys chroot/sys
+
+	# Enable ppa:snappy-dev/image inside of the chroot and add the PPA's
+	# public signing key to apt:
+	# - gnugpg is required by apt-key
+	# - gnugpg 2.x requires gpg-agent to be running
+	# - procfs must be bind-mounted for gpg-agent
+	# - running apt-key as a child process of gpg-agent --daemon stops the
+	#   agent shortly after apt-key executes
+	$(ENV) chroot chroot apt-get -y install gnupg
+	mkdir --mode=0600 chroot/tmp/gnupg-home
+	cat snappy-dev-image.asc | $(ENV) chroot chroot gpg-agent --homedir /tmp/gnupg-home --daemon apt-key add -
 	echo "deb http://ppa.launchpad.net/snappy-dev/image/ubuntu $(RELEASE) main" >> chroot/etc/apt/sources.list
+
 	if [ "$(PROPOSED)" = "true" ]; then \
 	  echo "deb http://$(MIRROR) $(RELEASE)-proposed main restricted" >> chroot/etc/apt/sources.list; \
 	  echo "deb http://$(MIRROR) $(RELEASE)-proposed universe" >> chroot/etc/apt/sources.list; \
@@ -85,11 +100,9 @@ all:
 	  echo "usbhid" >> chroot/etc/initramfs-tools/modules; \
 	  echo "hid-generic" >> chroot/etc/initramfs-tools/modules; \
 	fi
-	$(ENV) chroot chroot apt-get -y --allow-insecure-repositories update;\
-	$(ENV) chroot chroot apt-get -y --allow-unauthenticated install initramfs-tools-ubuntu-core linux-firmware xz-utils
-	mount --bind /proc chroot/proc
-	mount --bind /sys chroot/sys
-	$(ENV) chroot chroot apt-get -y --allow-unauthenticated install $(KERNELDEB) $(PKGS)
+	$(ENV) chroot chroot apt-get -y update;\
+	$(ENV) chroot chroot apt-get -y install initramfs-tools-ubuntu-core linux-firmware xz-utils
+	$(ENV) chroot chroot apt-get -y install $(KERNELDEB) $(PKGS)
 	umount chroot/sys
 	umount chroot/proc
 
