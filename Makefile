@@ -61,6 +61,26 @@ Pin-Priority: 700
 endef
 export APTPREF
 
+define RASPIFBKMODS
+sysimgblt
+sysfillrect
+syscopyarea
+fb_sys_fops
+drm
+drm_kms_helper
+vc4
+cec
+snd
+snd_soc_core
+snd_compress
+ac97_bus
+snd_pcm_dmaengine
+snd_pcm
+snd_timer
+snd_bcm2835
+endef
+export RASPIFBKMODS
+
 versioncheck: KIMGDEB = $(shell chroot chroot apt-cache depends $(KERNELDEB) | awk '/$(KERNELPRE)/ {print $$2}')
 install : KVERS = $(shell ls -1 chroot/boot/vmlinuz-*| tail -1 |sed 's/^.*vmlinuz-//;s/.efi.signed$$//')
 
@@ -99,6 +119,10 @@ all:
 	echo "COMPRESS=lzma" >chroot/etc/initramfs-tools/conf.d/ubuntu-core.conf
 	# LP1794279: vc4-kms-v3d and hardware accelerated framebuffer support
 	echo "i2c-bcm2708" > chroot/etc/initramfs-tools/modules
+	# LP1837209: fbdev / hdmi out support for psplash
+	if [ "$(KERNEL)" = "linux-image-raspi2" ]; then \
+		echo "$${RASPIFBKMODS}" >> chroot/etc/initramfs-tools/modules; \
+	fi
 	if [ "$(DPKG_ARCH)" = "amd64" ]; then \
 	  echo "nvme" >> chroot/etc/initramfs-tools/modules; \
 	  echo "usbhid" >> chroot/etc/initramfs-tools/modules; \
