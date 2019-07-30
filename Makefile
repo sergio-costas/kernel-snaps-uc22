@@ -106,6 +106,9 @@ all:
 	fi
 	$(ENV) chroot chroot apt-get -y update;\
 	$(ENV) chroot chroot apt-get -y install initramfs-tools-ubuntu-core linux-firmware xz-utils
+	# enable initramfs-tools framebuffer script (and includes the necessary
+	# kmods to initrd.img)
+	echo "FRAMEBUFFER=y" > chroot/usr/share/initramfs-tools/conf-hooks.d/ubuntu-core-fb
 	$(ENV) chroot chroot apt-get -y install $(KERNELDEB) $(PKGS)
 	umount chroot/sys
 	umount chroot/proc
