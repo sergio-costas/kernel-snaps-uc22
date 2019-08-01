@@ -80,14 +80,7 @@ prepare-chroot:
 
 	# Enable ppa:snappy-dev/image inside of the chroot and add the PPA's
 	# public signing key to apt:
-	# - gnugpg is required by apt-key
-	# - gnugpg 2.x requires gpg-agent to be running
-	# - procfs must be bind-mounted for gpg-agent
-	# - running apt-key as a child process of gpg-agent --daemon stops the
-	#   agent shortly after apt-key executes
-	$(ENV) chroot chroot apt-get -y install gnupg
-	mkdir --mode=0600 chroot/tmp/gnupg-home
-	cat snappy-dev-image.asc | $(ENV) chroot chroot gpg-agent --homedir /tmp/gnupg-home --daemon apt-key add -
+	cp snappy-dev-image.asc chroot/etc/apt/trusted.gpg.d/
 	# Copy in the sources.list just before modifying it (on build envs this already
 	# seems to be present, otherwise those would not fail).
 	cp /etc/apt/sources.list chroot/etc/apt/sources.list
