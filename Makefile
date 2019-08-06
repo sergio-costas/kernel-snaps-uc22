@@ -44,6 +44,10 @@ Pin: release a=$(RELEASE)-proposed
 Pin-Priority: 750
 
 Package: *
+Pin: origin "ppa.launchpad.net"
+Pin-Priority: 720
+
+Package: *
 Pin: release a=$(RELEASE)-updates
 Pin-Priority: 720
 
