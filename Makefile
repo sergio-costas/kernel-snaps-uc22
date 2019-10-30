@@ -65,10 +65,13 @@ Pin-Priority: 700
 endef
 export APTPREF
 
-versioncheck: KIMGDEB = $(shell chroot chroot apt-cache depends $(KERNELDEB) | awk '/$(KERNELPRE)/ {print $$2}')
+version-check: KERNELMETAEQ=$(shell for meta in $$(chroot chroot apt-cache show $(KERNELDEB) | awk '/Package:/ {package=$$2} /Version:/ {print package "=" $$2}'); do chroot chroot apt-cache depends $$meta | awk '/$(KERNELPRE)/ {print "'"$$meta"'"}'; done)
+version-check: KIMGDEB = $(shell chroot chroot apt-cache depends $(KERNELMETAEQ) | awk '/$(KERNELPRE)/ {print $$2}')
 install : KVERS = $(shell ls -1 chroot/boot/vmlinuz-*| tail -1 |sed 's/^.*vmlinuz-//;s/.efi.signed$$//')
 
-all:
+all: version-check
+
+prepare-chroot:
 	debootstrap --variant=minbase $(RELEASE) chroot
 	$(ENV) chroot chroot apt-get -y update
 
@@ -113,11 +116,13 @@ all:
 	# enable initramfs-tools framebuffer script (and includes the necessary
 	# kmods to initrd.img)
 	echo "FRAMEBUFFER=y" > chroot/usr/share/initramfs-tools/conf-hooks.d/ubuntu-core-fb
-	$(ENV) chroot chroot apt-get -y install $(KERNELDEB) $(PKGS)
+
+prepare-kernel: prepare-chroot
+	$(ENV) chroot chroot apt-get -y install $(KERNELMETAEQ) $(PKGS)
 	umount chroot/sys
 	umount chroot/proc
 
-install: versioncheck
+install:
 	mkdir -p $(DESTDIR)/lib $(DESTDIR)/meta $(DESTDIR)/firmware $(DESTDIR)/modules
 	if [ -f chroot/boot/vmlinu?-*.signed ]; then \
 	  mv chroot/boot/vmlinu?-*.signed $(DESTDIR)/kernel.img; \
@@ -171,7 +176,7 @@ install: versioncheck
 	cd $(DESTDIR); ln -s kernel.img vmlinuz
 	cd $(DESTDIR); ln -s initrd.img initrd.img-$(KVERS)
 
-versioncheck:
+version-check: prepare-kernel
 	{ \
 	set -e; \
 	echo $(KIMGDEB); \
@@ -179,8 +184,9 @@ versioncheck:
 	KIMGVER="$$(dpkg --root=chroot -l | awk '/$(KIMGDEB)/ {print $$3}')"; \
 	echo $$KIMGVER; \
 	[ ! $$KIMGVER ] && echo "Unable to extract KIMGVER, exit" && exit 1; \
-	if [ $$KIMGVER != $(SNAPCRAFT_PROJECT_VERSION) ]; then \
-	  echo "Version mismatch:\nInstalled: $$KIMGVER Requested: $(SNAPCRAFT_PROJECT_VERSION)"; \
-	  exit 1; \
-	fi; \
+	case "$$KIMGVER" in \
+	$(SNAPCRAFT_PROJECT_VERSION)|$(SNAPCRAFT_PROJECT_VERSION)+*) ;; \
+	*)	echo "Version mismatch:\nInstalled: $$KIMGVER Requested: $(SNAPCRAFT_PROJECT_VERSION)"; \
+		exit 1; \
+	esac; \
 	}
