@@ -103,7 +103,6 @@ prepare-chroot:
 	  echo "$${APTPREF}" > chroot/etc/apt/preferences.d/01proposedkernel; \
 	fi
 	mkdir -p chroot/etc/initramfs-tools/conf.d
-	echo "COMPRESS=lzma" >chroot/etc/initramfs-tools/conf.d/ubuntu-core.conf
 	# LP1794279: vc4-kms-v3d and hardware accelerated framebuffer support
 	echo "i2c-bcm2708" > chroot/etc/initramfs-tools/modules
 	if [ "$(DPKG_ARCH)" = "amd64" ]; then \
