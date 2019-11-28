@@ -121,6 +121,10 @@ install:
 	else \
 	  mv chroot/boot/vmlinu?-* $(DESTDIR)/kernel.img; \
 	fi
+	if [ -f chroot/boot/kernel.efi-* ]; then \
+	  mv chroot/boot/kernel.efi-* $(DESTDIR)/kernel.efi; \
+	fi
+	mv chroot/boot/ubuntu-core-initramfs.img-* $(DESTDIR)/ubuntu-core-initramfs.img
 	mv chroot/boot/initrd.img-* $(DESTDIR)/initrd.img
 	# Copy meta data into the snap. The ABI file itself actually was
 	# not used for anything and just done for completeness. Since new
@@ -167,6 +171,8 @@ install:
 	cd $(DESTDIR); ln -s kernel.img vmlinuz-$(KVERS)
 	cd $(DESTDIR); ln -s kernel.img vmlinuz
 	cd $(DESTDIR); ln -s initrd.img initrd.img-$(KVERS)
+	cd $(DESTDIR); ln -s ubuntu-core-initramfs.img ubuntu-core-initramfs.img-$(KVERS)
+	if [ -e $(DESTDIR)/kernel.efi ]; then cd $(DESTDIR); ln -s kernel.efi kernel.img-$(KVERS); fi
 
 version-check: prepare-kernel
 	{ \
