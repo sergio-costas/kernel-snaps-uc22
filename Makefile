@@ -95,19 +95,9 @@ prepare-chroot:
 	  echo "deb http://$(MIRROR) $(RELEASE)-proposed universe" >> chroot/etc/apt/sources.list; \
 	  echo "$${APTPREF}" > chroot/etc/apt/preferences.d/01proposedkernel; \
 	fi
-	mkdir -p chroot/etc/initramfs-tools/conf.d
-	# LP1794279: vc4-kms-v3d and hardware accelerated framebuffer support
-	echo "i2c-bcm2708" > chroot/etc/initramfs-tools/modules
-	if [ "$(DPKG_ARCH)" = "amd64" ]; then \
-	  echo "nvme" >> chroot/etc/initramfs-tools/modules; \
-	  echo "usbhid" >> chroot/etc/initramfs-tools/modules; \
-	  echo "hid-generic" >> chroot/etc/initramfs-tools/modules; \
-	fi
+
 	$(ENV) chroot chroot apt-get -y update;\
-	$(ENV) chroot chroot apt-get -y install initramfs-tools-ubuntu-core linux-firmware xz-utils
-	# enable initramfs-tools framebuffer script (and includes the necessary
-	# kmods to initrd.img)
-	echo "FRAMEBUFFER=y" > chroot/usr/share/initramfs-tools/conf-hooks.d/ubuntu-core-fb
+	$(ENV) chroot chroot apt-get -y install ubuntu-core-initramfs linux-firmware
 
 prepare-kernel: prepare-chroot
 	$(ENV) chroot chroot apt-get -y install $(KERNELMETAEQ) $(PKGS)
@@ -116,16 +106,12 @@ prepare-kernel: prepare-chroot
 
 install:
 	mkdir -p $(DESTDIR)/lib $(DESTDIR)/meta $(DESTDIR)/firmware $(DESTDIR)/modules
-	if [ -f chroot/boot/vmlinu?-*.signed ]; then \
-	  mv chroot/boot/vmlinu?-*.signed $(DESTDIR)/kernel.img; \
-	else \
-	  mv chroot/boot/vmlinu?-* $(DESTDIR)/kernel.img; \
-	fi
 	if [ -f chroot/boot/kernel.efi-* ]; then \
 	  mv chroot/boot/kernel.efi-* $(DESTDIR)/kernel.efi; \
+	else \
+	  mv chroot/boot/vmlinu?-* $(DESTDIR)/kernel.img; \
+	  mv chroot/boot/ubuntu-core-initramfs.img-* $(DESTDIR)/initrd.img; \
 	fi
-	mv chroot/boot/ubuntu-core-initramfs.img-* $(DESTDIR)/ubuntu-core-initramfs.img
-	mv chroot/boot/initrd.img-* $(DESTDIR)/initrd.img
 	# Copy meta data into the snap. The ABI file itself actually was
 	# not used for anything and just done for completeness. Since new
 	# kernel builds move this into a separate package which is not
@@ -168,11 +154,6 @@ install:
 	# create all links
 	cd $(DESTDIR)/lib; ln -s ../firmware .
 	cd $(DESTDIR)/lib; ln -s ../modules .
-	cd $(DESTDIR); ln -s kernel.img vmlinuz-$(KVERS)
-	cd $(DESTDIR); ln -s kernel.img vmlinuz
-	cd $(DESTDIR); ln -s initrd.img initrd.img-$(KVERS)
-	cd $(DESTDIR); ln -s ubuntu-core-initramfs.img ubuntu-core-initramfs.img-$(KVERS)
-	if [ -e $(DESTDIR)/kernel.efi ]; then cd $(DESTDIR); ln -s kernel.efi kernel.img-$(KVERS); fi
 
 version-check: prepare-kernel
 	{ \
