@@ -100,6 +100,10 @@ prepare-chroot:
 	$(ENV) chroot chroot apt-get -y install ubuntu-core-initramfs linux-firmware
 
 prepare-kernel: prepare-chroot
+	# linux-firmware-raspi2 wants a /boot/firmware directory
+ifneq (,$(filter linux-firmware-raspi2,$(PKGS)))
+	mkdir -p chroot/boot/firmware
+endif
 	$(ENV) chroot chroot apt-get -y install $(KERNELMETAEQ) $(PKGS)
 	umount chroot/sys
 	umount chroot/proc
