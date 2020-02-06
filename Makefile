@@ -96,7 +96,7 @@ prepare-chroot:
 	  echo "$${APTPREF}" > chroot/etc/apt/preferences.d/01proposedkernel; \
 	fi
 
-	$(ENV) chroot chroot apt-get -y update;\
+	$(ENV) chroot chroot apt-get -y update
 	$(ENV) chroot chroot apt-get -y install ubuntu-core-initramfs linux-firmware
 
 prepare-kernel: prepare-chroot
