@@ -65,10 +65,6 @@ Pin-Priority: 700
 endef
 export APTPREF
 
-version-check: KERNELMETAEQ=$(shell for meta in $$(chroot chroot apt-cache show $(KERNELDEB) | awk '/Package:/ {package=$$2} /Version:/ {print package "=" $$2}'); do chroot chroot apt-cache depends $$meta | awk '/$(KERNELPRE)/ {print "'"$$meta"'"}'; done)
-version-check: KIMGDEB = $(shell chroot chroot apt-cache depends $(KERNELMETAEQ) | awk '/$(KERNELPRE)/ {print $$2}')
-install : KVERS = $(shell ls -1 chroot/boot/vmlinuz-*| tail -1 |sed 's/^.*vmlinuz-//;s/.efi.signed$$//')
-
 all: version-check
 
 prepare-chroot:
@@ -108,6 +104,7 @@ endif
 	umount chroot/sys
 	umount chroot/proc
 
+install: KVERS = $(shell ls -1 chroot/boot/vmlinuz-*| tail -1 |sed 's/^.*vmlinuz-//;s/.efi.signed$$//')
 install:
 	mkdir -p $(DESTDIR)/lib $(DESTDIR)/meta $(DESTDIR)/firmware $(DESTDIR)/modules
 	if [ -f chroot/boot/kernel.efi-* ]; then \
@@ -159,6 +156,8 @@ install:
 	cd $(DESTDIR)/lib; ln -s ../firmware .
 	cd $(DESTDIR)/lib; ln -s ../modules .
 
+version-check: KERNELMETAEQ = $(shell for meta in $$(chroot chroot apt-cache show $(KERNELDEB) | awk '/Package:/ {package=$$2} /Version:/ {print package "=" $$2}'); do chroot chroot apt-cache depends $$meta | awk '/$(KERNELPRE)/ {print "'"$$meta"'"}'; done)
+version-check: KIMGDEB = $(shell chroot chroot apt-cache depends $(KERNELMETAEQ) | awk '/$(KERNELPRE)/ {print $$2}')
 version-check: prepare-kernel
 	echo "KERNELMETAEQ: $(KERNELMETAEQ)"
 	echo "KIMGDEB: $(KIMGDEB)"
