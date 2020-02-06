@@ -160,6 +160,7 @@ install:
 	cd $(DESTDIR)/lib; ln -s ../modules .
 
 version-check: prepare-kernel
+	echo "KERNELMETAEQ: $(KERNELMETAEQ)"
 	echo "KIMGDEB: $(KIMGDEB)"
 	test -n "$(KIMGDEB)" || ( echo "Unable to extract KIMGDEB, exit"; false; )
 	KIMGVER="$$(dpkg --root=chroot -l | awk '/$(KIMGDEB)/ {print $$3}')"; \
