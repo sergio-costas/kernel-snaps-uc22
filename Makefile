@@ -160,16 +160,13 @@ install:
 	cd $(DESTDIR)/lib; ln -s ../modules .
 
 version-check: prepare-kernel
-	{ \
-	set -e; \
-	echo $(KIMGDEB); \
-	[ ! $(KIMGDEB) ] && echo "Unable to extract KIMGDEB, exit" && exit 1; \
+	echo "KIMGDEB: $(KIMGDEB)"
+	test -n "$(KIMGDEB)" || ( echo "Unable to extract KIMGDEB, exit"; false; )
 	KIMGVER="$$(dpkg --root=chroot -l | awk '/$(KIMGDEB)/ {print $$3}')"; \
-	echo $$KIMGVER; \
-	[ ! $$KIMGVER ] && echo "Unable to extract KIMGVER, exit" && exit 1; \
+	echo "KIMGVER: $$KIMGVER"; \
+	test -n "$$KIMGVER" || ( echo "Unable to extract KIMGVER, exit"; false; ); \
 	case "$$KIMGVER" in \
 	$(SNAPCRAFT_PROJECT_VERSION)|$(SNAPCRAFT_PROJECT_VERSION)+*) ;; \
 	*)	echo "Version mismatch:\nInstalled: $$KIMGVER Requested: $(SNAPCRAFT_PROJECT_VERSION)"; \
-		exit 1; \
-	esac; \
-	}
+		false ;; \
+	esac
