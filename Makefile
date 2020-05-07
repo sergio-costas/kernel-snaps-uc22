@@ -1,5 +1,6 @@
 DPKG_ARCH := $(shell dpkg --print-architecture)
-RELEASE := $(shell lsb_release -c -s)
+HOST_RELEASE := $(shell lsb_release -c -s)
+RELEASE := $(shell echo $(KERNEL_SOURCE) | awk -F : '{print $$1}')
 ENV := DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true LC_ALL=C LANG=C
 
 MIRROR := ftpmaster.internal/ubuntu
@@ -79,7 +80,11 @@ prepare-chroot:
 	cp snappy-dev-image.asc chroot/etc/apt/trusted.gpg.d/
 	# Copy in the sources.list just before modifying it (on build envs this already
 	# seems to be present, otherwise those would not fail).
+ifeq ($(HOST_RELEASE),$(RELEASE))
 	cp /etc/apt/sources.list chroot/etc/apt/sources.list
+else
+	cat /etc/apt/sources.list | sed 's/$(HOST_RELEASE)/$(RELEASE)/' > chroot/etc/apt/sources.list
+endif
 	echo "deb http://ppa.launchpad.net/snappy-dev/image/ubuntu $(RELEASE) main" >> chroot/etc/apt/sources.list
 
 	# install all updates
