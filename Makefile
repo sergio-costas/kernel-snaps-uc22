@@ -100,7 +100,7 @@ endif
 	$(ENV) chroot chroot apt-get -y update
 	$(ENV) chroot chroot apt-get -y install ubuntu-core-initramfs linux-firmware
 
-prepare-kernel: prepare-chroot
+install-kernel: prepare-chroot
 	# linux-firmware-raspi2 wants a /boot/firmware directory
 ifneq (,$(filter linux-firmware-raspi2,$(PKGS)))
 	mkdir -p chroot/boot/firmware
@@ -109,11 +109,34 @@ endif
 	umount chroot/sys
 	umount chroot/proc
 
+prepare-host:
+ifneq ($(HOST_RELEASE),$(RELEASE))
+	sed -i 's/$(HOST_RELEASE)/$(RELEASE)/' /etc/apt/sources.list
+endif
+	if [ "$(PROPOSED)" = "true" ]; then \
+	  echo "deb http://$(MIRROR) $(RELEASE)-proposed main restricted" >> /etc/apt/sources.list; \
+	  echo "deb http://$(MIRROR) $(RELEASE)-proposed universe" >> /etc/apt/sources.list; \
+	  echo "$${APTPREF}" > /etc/apt/preferences.d/01proposedkernel; \
+	fi
+	$(ENV) apt-get -y update
+
+extract-kernel: FLAVOUR=$(shell echo $(KERNELDEB) | sed 's/linux-image-\(.*\)/\1/')
+extract-kernel: KERNEL_PACKAGE=$(shell apt-cache search $(KERNELPRE).*$(FLAVOUR) | sort | tail -1 | awk '{print $$1}')
+extract-kernel: KERNEL_VERSION=$(shell apt-cache show $(KERNEL_PACKAGE) | grep ^Version: | awk '{print $$2}')
+extract-kernel: prepare-host
+	mkdir chroot
+	apt-get download linux-firmware linux-image-uc20-efi-$(KERNEL_VERSION)-$(FLAVOUR) linux-image-$(ABI)-$(FLAVOUR) linux-modules-$(ABI)-$(FLAVOUR) linux-modules-extra-$(ABI)-$(FLAVOUR)
+	for p in $$(ls *.deb); do \
+	  dpkg-deb -x $$p chroot; \
+	done
+	depmod -b chroot $(ABI)-$(FLAVOUR)
+
 install: KVERS = $(shell ls -1 chroot/boot/vmlinuz-*| tail -1 |sed 's/^.*vmlinuz-//;s/.efi.signed$$//')
 install:
 	mkdir -p $(DESTDIR)/lib $(DESTDIR)/meta $(DESTDIR)/firmware $(DESTDIR)/modules
-	if [ -f chroot/boot/kernel.efi-* ]; then \
-	  mv chroot/boot/kernel.efi-* $(DESTDIR)/kernel.efi; \
+	KERNEL_EFI="$$(ls chroot/boot/kernel.efi-* | sort | head -1)"; \
+	if [ -f "$$KERNEL_EFI" ]; then \
+	  mv $$KERNEL_EFI $(DESTDIR)/kernel.efi; \
 	else \
 	  mv chroot/boot/vmlinu?-* $(DESTDIR)/kernel.img; \
 	  mv chroot/boot/ubuntu-core-initramfs.img-* $(DESTDIR)/initrd.img; \
@@ -161,16 +184,25 @@ install:
 	cd $(DESTDIR)/lib; ln -s ../firmware .
 	cd $(DESTDIR)/lib; ln -s ../modules .
 
-version-check: KERNELMETAEQ = $(shell for meta in $$(chroot chroot apt-cache show $(KERNELDEB) | awk '/Package:/ {package=$$2} /Version:/ {print package "=" $$2}'); do chroot chroot apt-cache depends $$meta | awk '/$(KERNELPRE)/ {print "'"$$meta"'"}'; done)
-version-check: KIMGDEB = $(shell chroot chroot apt-cache depends $(KERNELMETAEQ) | awk '/$(KERNELPRE)/ {print $$2}')
-version-check: prepare-kernel
+ifeq ($(KERNEL_IMAGE_FORMAT),efi)
+version-check: extract-kernel
+version-check: CHROOT_PREFIX =
+version-check: KIMGVER = $(shell apt-cache show $(KIMGDEB) | awk '/Version:/ {print $$2}')
+else
+version-check: install-kernel
+version-check: CHROOT_PREFIX = chroot chroot
+version-check: KIMGVER = $(shell dpkg --root=chroot -l | awk '/$(KIMGDEB)/ {print $$3}')
+endif
+
+version-check: KERNELMETAEQ = $(shell for meta in $$($(CHROOT_PREFIX) apt-cache show $(KERNELDEB) | awk '/Package:/ {package=$$2} /Version:/ {print package "=" $$2}'); do $(CHROOT_PREFIX) apt-cache depends $$meta | awk '/$(KERNELPRE)/ {print "'"$$meta"'"}'; done)
+version-check: KIMGDEB = $(shell $(CHROOT_PREFIX) apt-cache depends $(KERNELMETAEQ) | awk '/$(KERNELPRE)/ {print $$2}')
+version-check:
 	echo "KERNELMETAEQ: $(KERNELMETAEQ)"
 	echo "KIMGDEB: $(KIMGDEB)"
 	test -n "$(KIMGDEB)" || ( echo "Unable to extract KIMGDEB, exit"; false; )
-	KIMGVER="$$(dpkg --root=chroot -l | awk '/$(KIMGDEB)/ {print $$3}')"; \
-	echo "KIMGVER: $$KIMGVER"; \
-	test -n "$$KIMGVER" || ( echo "Unable to extract KIMGVER, exit"; false; ); \
-	case "$$KIMGVER" in \
+	echo "KIMGVER: $(KIMGVER)"; \
+	test -n "$(KIMGVER)" || ( echo "Unable to extract KIMGVER, exit"; false; ); \
+	case "$(KIMGVER)" in \
 	$(SNAPCRAFT_PROJECT_VERSION)|$(SNAPCRAFT_PROJECT_VERSION)+*) ;; \
 	*)	echo "Version mismatch:\nInstalled: $$KIMGVER Requested: $(SNAPCRAFT_PROJECT_VERSION)"; \
 		false ;; \
