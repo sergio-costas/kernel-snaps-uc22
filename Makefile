@@ -110,6 +110,8 @@ endif
 	umount chroot/proc
 
 prepare-host:
+	cp canonical-kernel-team-uc20-staging.asc /etc/apt/trusted.gpg.d/
+	echo "deb http://ppa.launchpad.net/canonical-kernel-team/uc20-staging/ubuntu $(RELEASE) main" >> /etc/apt/sources.list
 ifneq ($(HOST_RELEASE),$(RELEASE))
 	sed -i 's/$(HOST_RELEASE)/$(RELEASE)/' /etc/apt/sources.list
 endif
