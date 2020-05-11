@@ -126,7 +126,10 @@ extract-kernel: FLAVOUR=$(shell echo $(KERNELDEB) | sed 's/linux-image-\(.*\)/\1
 extract-kernel: KERNEL_PACKAGE=$(shell apt-cache search $(KERNELPRE).*$(FLAVOUR) | sort | tail -1 | awk '{print $$1}')
 extract-kernel: prepare-host
 	mkdir chroot
-	apt-get download linux-firmware linux-image-uc20-efi-$(ABI)-$(FLAVOUR) linux-image-$(ABI)-$(FLAVOUR) linux-modules-$(ABI)-$(FLAVOUR) linux-modules-extra-$(ABI)-$(FLAVOUR)
+	apt-get download linux-firmware linux-image-uc20-efi-$(ABI)-$(FLAVOUR) linux-image-$(ABI)-$(FLAVOUR) linux-modules-$(ABI)-$(FLAVOUR)
+	if [ "$(FLAVOUR)" != "lowlatency" ]; then \
+	  apt-get download linux-modules-extra-$(ABI)-$(FLAVOUR); \
+	fi
 	for p in $$(ls *.deb); do \
 	  dpkg-deb -x $$p chroot; \
 	done
