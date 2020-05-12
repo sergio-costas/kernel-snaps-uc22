@@ -27,6 +27,11 @@ $(error linux-pc-image is a meta package only used in i386, amd64, armhf or arm6
 endif
 endif
 
+# HACK: Force using efi image format for only amd64
+ifeq (,$(filter amd64,$(DPKG_ARCH)))
+KERNEL_IMAGE_FORMAT := vmlinuz
+endif
+
 define APTPREF
 Package: linux-firmware
 Pin: release a=$(RELEASE)-updates
