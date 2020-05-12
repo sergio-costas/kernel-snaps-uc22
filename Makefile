@@ -28,8 +28,14 @@ endif
 endif
 
 # HACK: Force using efi image format for only amd64
-ifeq (,$(filter amd64,$(DPKG_ARCH)))
-KERNEL_IMAGE_FORMAT := vmlinuz
+KERNEL_IMAGE_FORMAT ?= vmlinuz
+IMAGE_FORMAT := $(if $(filter amd64,$(DPKG_ARCH)),$(KERNEL_IMAGE_FORMAT),vmlinuz)
+ifeq ($(IMAGE_FORMAT),efi)
+VERSION_CHECK_PREREQS := extract-kernel
+CHROOT_PREFIX :=
+else
+VERSION_CHECK_PREREQS := install-kernel
+CHROOT_PREFIX := chroot chroot
 endif
 
 define APTPREF
@@ -193,25 +199,21 @@ install:
 	cd $(DESTDIR)/lib; ln -s ../firmware .
 	cd $(DESTDIR)/lib; ln -s ../modules .
 
-ifeq ($(KERNEL_IMAGE_FORMAT),efi)
-version-check: extract-kernel
-version-check: CHROOT_PREFIX =
-version-check: KIMGVER = $(shell apt-cache show $(KIMGDEB) | awk '/Version:/ {print $$2}')
-else
-version-check: install-kernel
-version-check: CHROOT_PREFIX = chroot chroot
-version-check: KIMGVER = $(shell dpkg --root=chroot -l | awk '/$(KIMGDEB)/ {print $$3}')
-endif
-
+version-check: $(VERSION_CHECK_PREREQS)
 version-check: KERNELMETAEQ = $(shell for meta in $$($(CHROOT_PREFIX) apt-cache show $(KERNELDEB) | awk '/Package:/ {package=$$2} /Version:/ {print package "=" $$2}'); do $(CHROOT_PREFIX) apt-cache depends $$meta | awk '/$(KERNELPRE)/ {print "'"$$meta"'"}'; done)
 version-check: KIMGDEB = $(shell $(CHROOT_PREFIX) apt-cache depends $(KERNELMETAEQ) | awk '/$(KERNELPRE)/ {print $$2}')
 version-check:
 	echo "KERNELMETAEQ: $(KERNELMETAEQ)"
 	echo "KIMGDEB: $(KIMGDEB)"
 	test -n "$(KIMGDEB)" || ( echo "Unable to extract KIMGDEB, exit"; false; )
-	echo "KIMGVER: $(KIMGVER)"; \
-	test -n "$(KIMGVER)" || ( echo "Unable to extract KIMGVER, exit"; false; ); \
-	case "$(KIMGVER)" in \
+	if [ "$(IMAGE_FORMAT)" = efi ]; then \
+	  KIMGVER=$$(apt-cache show $(KIMGDEB) | awk '/Version:/ {print $$2}'); \
+	else \
+	  KIMGVER=$$(dpkg --root=chroot -l | awk '/$(KIMGDEB)/ {print $$3}'); \
+	fi; \
+	echo "KIMGVER: $$KIMGVER"; \
+	test -n "$$KIMGVER" || ( echo "Unable to extract KIMGVER, exit"; false; ); \
+	case "$$KIMGVER" in \
 	$(SNAPCRAFT_PROJECT_VERSION)|$(SNAPCRAFT_PROJECT_VERSION)+*) ;; \
 	*)	echo "Version mismatch:\nInstalled: $$KIMGVER Requested: $(SNAPCRAFT_PROJECT_VERSION)"; \
 		false ;; \
