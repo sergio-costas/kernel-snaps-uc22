@@ -1,0 +1,101 @@
+# rewriting variables passed from the outside environment doesn't work in LP,
+# so use KERNELDEB as a temporary local variable to hold the kernel pkg name
+KERNELDEB := $(KERNEL)
+
+# linux-pc-image is a meta package used to indicate linux-image-generic,
+# depending on the building architecture (amd64 or i386), it's invalid kernel
+# name for any other arch
+ifneq (,$(findstring linux-pc-image,$(KERNELDEB)))
+ifneq (,$(filter amd64 i386 armhf arm64,$(DPKG_ARCH)))
+KERNELDEB := $(subst linux-pc-image,linux-image-uc20-efi-$(ABI)-$(FLAVOUR),$(KERNELDEB))
+else
+$(error linux-pc-image is a meta package only used in i386, amd64, armhf or arm64 abort)
+endif
+endif
+
+prepare-host:
+	cp canonical-kernel-team-uc20-staging.asc /etc/apt/trusted.gpg.d/
+	echo "deb http://ppa.launchpad.net/canonical-kernel-team/uc20-staging/ubuntu $(RELEASE) main" >> /etc/apt/sources.list
+ifneq ($(HOST_RELEASE),$(RELEASE))
+	sed -i 's/$(HOST_RELEASE)/$(RELEASE)/' /etc/apt/sources.list
+endif
+	if [ "$(PROPOSED)" = "true" ]; then \
+	  echo "deb http://$(MIRROR) $(RELEASE)-proposed main restricted" >> /etc/apt/sources.list; \
+	  echo "deb http://$(MIRROR) $(RELEASE)-proposed universe" >> /etc/apt/sources.list; \
+	  echo "$${APTPREF}" > /etc/apt/preferences.d/01proposedkernel; \
+	fi
+	$(ENV) apt-get -y update
+
+prepare-kernel: prepare-host
+	mkdir chroot
+	apt-get download linux-firmware $(KERNELDEB) linux-image-$(ABI)-$(FLAVOUR) linux-modules-$(ABI)-$(FLAVOUR)
+	if [ "$(FLAVOUR)" != "lowlatency" ]; then \
+	  apt-get download linux-modules-extra-$(ABI)-$(FLAVOUR); \
+	fi
+	for p in $$(ls *.deb); do \
+	  dpkg-deb -x $$p chroot; \
+	done
+	depmod -b chroot $(ABI)-$(FLAVOUR)
+
+install: KVERS = $(shell ls -1 chroot/boot/kernel.efi-*| tail -1 |sed 's/^.*kernel\.efi-//')
+install:
+	mkdir -p $(DESTDIR)/lib $(DESTDIR)/meta $(DESTDIR)/firmware $(DESTDIR)/modules
+	KERNEL_EFI="$$(ls chroot/boot/kernel.efi-* | sort | head -1)"; \
+	if [ ! -f "$$KERNEL_EFI" ]; then \
+	  echo "No kernel.efi found, abort"; \
+	  false; \
+	fi; \
+	mv $$KERNEL_EFI $(DESTDIR)/kernel.efi; \
+	# Copy meta data into the snap. The ABI file itself actually was
+	# not used for anything and just done for completeness. Since new
+	# kernel builds move this into a separate package which is not
+	# installed by default we need to ignore the case when is not
+	# found in the old location.
+	if [ -f chroot/boot/abi-* ]; then \
+	  cp -ar chroot/boot/abi-* $(DESTDIR)/; \
+	fi
+	cp -ar chroot/boot/System.map-* chroot/boot/config-* $(DESTDIR)/
+	# arch dependant stuff
+	# TODO: match against the name in snapcraft.yaml too so we have more fine grained
+	# subarch handling
+	if [ "$(DPKG_ARCH)" = "arm64" ]; then \
+	  mkdir -p $(DESTDIR)/dtbs; \
+	  cp -a chroot/lib/firmware/$(KVERS)/device-tree/* $(DESTDIR)/dtbs/; \
+	  mkdir -p $(DESTDIR)/firmware/wlan; \
+	  ln -s /run/macaddr0 $(DESTDIR)/firmware/wlan/; \
+	fi
+	if [ "$(DPKG_ARCH)" = "armhf" ]; then \
+	  mkdir -p $(DESTDIR)/dtbs; \
+	  cp -a chroot/lib/firmware/$(KVERS)/device-tree/* $(DESTDIR)/dtbs/; \
+	  tar -C $(DESTDIR)/dtbs -f $(DESTDIR)/dtbs/overlays.tgz -czv overlays; \
+	  rm -rf $(DESTDIR)/dtbs/overlays; \
+	  if [ -d chroot/usr/share/doc/raspberrypi-wireless-firmware ]; then \
+	    mv chroot/usr/share/doc/raspberrypi-wireless-firmware $(DESTDIR)/firmware/rpi-wlanfw-licenses; \
+	  fi; \
+	fi
+	# copy modules and firmware
+	cp -a chroot/lib/modules/* $(DESTDIR)/modules/
+	cp -a chroot/lib/firmware/* $(DESTDIR)/firmware/
+	# if we ship the rpi3 wlan firmware, copy it to the right dir
+	if [ -d chroot/lib/firmware/brcm80211/brcm ]; then \
+	  mv chroot/lib/firmware/brcm80211/brcm/* $(DESTDIR)/firmware/brcm; \
+	  rm -rf chroot/lib/firmware/brcm80211; \
+	fi
+	# copy all licenses into the snap
+	cp /usr/share/common-licenses/GPL-2 $(DESTDIR)/
+	mv chroot/usr/share/doc/linux-firmware/copyright $(DESTDIR)/firmware/
+	mv chroot/usr/share/doc/linux-firmware/licenses $(DESTDIR)/firmware/
+	# create all links
+	cd $(DESTDIR)/lib; ln -s ../firmware .
+	cd $(DESTDIR)/lib; ln -s ../modules .
+
+version-check: prepare-kernel
+	echo "KIMGDEB: $(KERNELDEB)"
+	test -n "$(KERNELDEB)" || ( echo "Unable to extract KIMGDEB, exit"; false; )
+	KIMGVER=$$(apt-cache show $(KERNELDEB) | awk '/Version:/ {print $$2}'); \
+	echo "KIMGVER: $$KIMGVER"; \
+	test -n "$$KIMGVER" || ( echo "Unable to extract KIMGVER, exit"; false; ); \
+	if [ "$$KIMGVER" != "$(SNAPCRAFT_PROJECT_VERSION)" ]; then \
+	  echo "Version mismatch:\nInstalled: $$KIMGVER Requested: $(SNAPCRAFT_PROJECT_VERSION)"; \
+	  false; \
+	fi
