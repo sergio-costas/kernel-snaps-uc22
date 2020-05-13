@@ -134,7 +134,6 @@ endif
 	$(ENV) apt-get -y update
 
 extract-kernel: FLAVOUR=$(shell echo $(KERNELDEB) | sed 's/linux-image-\(.*\)/\1/')
-extract-kernel: KERNEL_PACKAGE=$(shell apt-cache search $(KERNELPRE).*$(FLAVOUR) | sort | tail -1 | awk '{print $$1}')
 extract-kernel: prepare-host
 	mkdir chroot
 	apt-get download linux-firmware linux-image-uc20-efi-$(ABI)-$(FLAVOUR) linux-image-$(ABI)-$(FLAVOUR) linux-modules-$(ABI)-$(FLAVOUR)
