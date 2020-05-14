@@ -55,7 +55,6 @@ endif
 	umount chroot/sys
 	umount chroot/proc
 
-install: KVERS = $(shell ls -1 chroot/boot/vmlinuz-*| tail -1 |sed 's/^.*vmlinuz-//;s/.efi.signed$$//')
 install:
 	mkdir -p $(DESTDIR)/lib $(DESTDIR)/meta $(DESTDIR)/firmware $(DESTDIR)/modules
 	mv chroot/boot/vmlinu?-* $(DESTDIR)/kernel.img; \
@@ -74,13 +73,13 @@ install:
 	# subarch handling
 	if [ "$(DPKG_ARCH)" = "arm64" ]; then \
 	  mkdir -p $(DESTDIR)/dtbs; \
-	  cp -a chroot/lib/firmware/$(KVERS)/device-tree/* $(DESTDIR)/dtbs/; \
+	  cp -a chroot/lib/firmware/$(ABI)-$(FLAVOUR)/device-tree/* $(DESTDIR)/dtbs/; \
 	  mkdir -p $(DESTDIR)/firmware/wlan; \
 	  ln -s /run/macaddr0 $(DESTDIR)/firmware/wlan/; \
 	fi
 	if [ "$(DPKG_ARCH)" = "armhf" ]; then \
 	  mkdir -p $(DESTDIR)/dtbs; \
-	  cp -a chroot/lib/firmware/$(KVERS)/device-tree/* $(DESTDIR)/dtbs/; \
+	  cp -a chroot/lib/firmware/$(ABI)-$(FLAVOUR)/device-tree/* $(DESTDIR)/dtbs/; \
 	  tar -C $(DESTDIR)/dtbs -f $(DESTDIR)/dtbs/overlays.tgz -czv overlays; \
 	  rm -rf $(DESTDIR)/dtbs/overlays; \
 	  if [ -d chroot/usr/share/doc/raspberrypi-wireless-firmware ]; then \
