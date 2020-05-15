@@ -7,7 +7,7 @@ KERNELDEB := $(KERNEL)
 # name for any other arch
 ifneq (,$(findstring linux-pc-image,$(KERNELDEB)))
 ifneq (,$(filter amd64 i386 armhf arm64,$(DPKG_ARCH)))
-KERNELDEB := $(subst linux-pc-image,linux-image-uc20-efi-$(ABI)-$(FLAVOUR),$(KERNELDEB))
+KERNELDEB := $(subst linux-pc-image,linux-image-uc20-efi-$(FLAVOUR),$(KERNELDEB))
 else
 $(error linux-pc-image is a meta package only used in i386, amd64, armhf or arm64 abort)
 endif
