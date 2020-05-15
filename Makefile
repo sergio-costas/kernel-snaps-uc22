@@ -8,6 +8,15 @@ ifeq "$(strip $(KERNEL))" ""
 $(error KERNEL package name is missing, abort)
 endif
 
+# Determine flavour. Usually the last part of the kernel package name,
+# except for the special liux-pc-image which is based on the generic
+# flavour.
+ifneq (,$(findstring linux-pc-image,$(KERNEL)))
+FLAVOUR := generic
+else
+FLAVOUR := $(shell echo "$(KERNEL)" | sed -e 's/.*-\([^-]\+\)$$/\1/')
+endif
+
 ABI := $(shell echo $(SNAPCRAFT_PROJECT_VERSION) | cut -f1-3 -d".")
 
 define APTPREF
