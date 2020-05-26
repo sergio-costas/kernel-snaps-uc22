@@ -48,7 +48,7 @@ install-image:
 version-check: prepare-kernel
 	echo "KIMGDEB: $(KERNELDEB)"
 	test -n "$(KERNELDEB)" || ( echo "Unable to extract KIMGDEB, exit"; false; )
-	KIMGVER=$$(apt-cache show $(KERNELDEB) | awk '/Version:/ {print $$2}'); \
+	KIMGVER=$$(apt-cache show $(KERNELDEB) | sed -n -e 's/^Version: \([^+]*\)\(+.*\)\?/\1/p'); \
 	echo "KIMGVER: $$KIMGVER"; \
 	test -n "$$KIMGVER" || ( echo "Unable to extract KIMGVER, exit"; false; ); \
 	if [ "$$KIMGVER" != "$(SNAPCRAFT_PROJECT_VERSION)" ]; then \
