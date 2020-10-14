@@ -28,7 +28,7 @@ endif
 
 prepare-kernel: prepare-host
 	mkdir chroot
-	apt-get download linux-firmware $(KERNELDEB) linux-image-$(ABI)-$(FLAVOUR) linux-modules-$(ABI)-$(FLAVOUR)
+	apt-get download linux-firmware wireless-regdb $(KERNELDEB) linux-image-$(ABI)-$(FLAVOUR) linux-modules-$(ABI)-$(FLAVOUR)
 	if [ "$(FLAVOUR)" != "lowlatency" ]; then \
 	  apt-get download linux-modules-extra-$(ABI)-$(FLAVOUR); \
 	fi
