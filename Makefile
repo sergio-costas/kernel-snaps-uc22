@@ -80,23 +80,10 @@ install: install-image
 	  cp -ar chroot/boot/abi-* $(DESTDIR)/; \
 	fi
 	cp -ar chroot/boot/System.map-* chroot/boot/config-* $(DESTDIR)/
-	# arch dependant stuff
-	# TODO: match against the name in snapcraft.yaml too so we have more fine grained
-	# subarch handling
-	if [ "$(DPKG_ARCH)" = "arm64" ]; then \
+	# Add DTBs
+	if [ -d chroot/lib/firmware/$(ABI)-$(FLAVOUR)/device-tree ]; then \
 	  mkdir -p $(DESTDIR)/dtbs; \
 	  cp -a chroot/lib/firmware/$(ABI)-$(FLAVOUR)/device-tree/* $(DESTDIR)/dtbs/; \
-	  mkdir -p $(DESTDIR)/firmware/wlan; \
-	  ln -s /run/macaddr0 $(DESTDIR)/firmware/wlan/; \
-	fi
-	if [ "$(DPKG_ARCH)" = "armhf" ]; then \
-	  mkdir -p $(DESTDIR)/dtbs; \
-	  cp -a chroot/lib/firmware/$(ABI)-$(FLAVOUR)/device-tree/* $(DESTDIR)/dtbs/; \
-	  tar -C $(DESTDIR)/dtbs -f $(DESTDIR)/dtbs/overlays.tgz -czv overlays; \
-	  rm -rf $(DESTDIR)/dtbs/overlays; \
-	  if [ -d chroot/usr/share/doc/raspberrypi-wireless-firmware ]; then \
-	    mv chroot/usr/share/doc/raspberrypi-wireless-firmware $(DESTDIR)/firmware/rpi-wlanfw-licenses; \
-	  fi; \
 	fi
 	# copy modules and firmware
 	cp -a chroot/lib/modules/* $(DESTDIR)/modules/
