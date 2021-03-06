@@ -80,10 +80,12 @@ install: install-image
 	  cp -ar chroot/boot/abi-* $(DESTDIR)/; \
 	fi
 	cp -ar chroot/boot/System.map-* chroot/boot/config-* $(DESTDIR)/
-	# Add DTBs
+	# Add DTBs and kernel.yaml
 	if [ -d chroot/lib/firmware/$(ABI)-$(FLAVOUR)/device-tree ]; then \
 	  mkdir -p $(DESTDIR)/dtbs; \
 	  cp -a chroot/lib/firmware/$(ABI)-$(FLAVOUR)/device-tree/* $(DESTDIR)/dtbs/; \
+	  mkdir -p $(DESTDIR)/meta; \
+	  cp -a kernel.yaml $(DESTDIR)/meta/; \
 	fi
 	# copy modules and firmware
 	cp -a chroot/lib/modules/* $(DESTDIR)/modules/
