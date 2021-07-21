@@ -32,8 +32,8 @@ else
 	cat /etc/apt/sources.list | sed 's/$(HOST_RELEASE)/$(RELEASE)/' > chroot/etc/apt/sources.list
 endif
 	echo "deb http://ppa.launchpad.net/snappy-dev/image/ubuntu $(RELEASE) main" >> chroot/etc/apt/sources.list
-	# Copy the host's trusted.gpg for ubuntu-esm repositories
-	cp /etc/apt/trusted.gpg chroot/etc/apt/trusted.gpg.d/host-trusted.gpg
+	# Copy the host's trusted.gpg for ubuntu-esm repositories, if any
+	-cp /etc/apt/trusted.gpg chroot/etc/apt/trusted.gpg.d/host-trusted.gpg
 
 	# install all updates
 	$(ENV) chroot chroot apt-get -y update
