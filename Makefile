@@ -86,7 +86,7 @@ install: install-image
 	  cp -a chroot/lib/firmware/$(ABI)-$(FLAVOUR)/device-tree/* $(DESTDIR)/dtbs/; \
 	fi
 	# Add kernel.yaml
-	if [ "$(KERNEL_ASSETS)" = "true" ]; then
+	if [ "$(KERNEL_ASSETS)" = "true" ]; then \
 	  mkdir -p $(DESTDIR)/meta; \
 	  cp -a kernel.yaml $(DESTDIR)/meta/; \
 	fi
