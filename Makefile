@@ -105,3 +105,7 @@ install: install-image
 	# create all links
 	cd $(DESTDIR)/lib; ln -s ../firmware .
 	cd $(DESTDIR)/lib; ln -s ../modules .
+	# Remove unnecessary firmwares
+	if [ "$(TRIM_FIRMWARE)" = "true" ]; then \
+	  ./trim-firmware "$(DESTDIR)"; \
+	fi
