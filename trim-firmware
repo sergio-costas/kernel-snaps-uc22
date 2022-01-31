@@ -44,6 +44,11 @@ if [ -d "${DESTDIR}"/firmware.new/brcm ] ; then
 	cp "${DESTDIR}"/firmware/brcm/* "${DESTDIR}"/firmware.new/brcm
 fi
 
+# Copy the wifi regulatory database
+if [ -e "${DESTDIR}"/firmware/regulatory.db ] ; then
+	cp "${DESTDIR}"/firmware/regulatory.* "${DESTDIR}"/firmware.new
+fi
+
 # Move kernel firmware files to the new firmware directory
 for d in "${DESTDIR}"/modules/* ; do
 	if [ -d "${DESTDIR}"/firmware/"${d##*/}" ] ; then
