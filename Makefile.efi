@@ -40,7 +40,7 @@ prepare-kernel: prepare-host
 	depmod -b chroot $(ABI)-$(FLAVOUR)
 
 install-image:
-	KERNEL_EFI="$$(ls chroot/boot/kernel.efi-* | sort | head -1)"; \
+	KERNEL_EFI="$$(ls chroot/boot/kernel.efi* | sort | head -1)"; \
 	if [ ! -f "$$KERNEL_EFI" ]; then \
 	  echo "No kernel.efi found, abort"; \
 	  false; \
