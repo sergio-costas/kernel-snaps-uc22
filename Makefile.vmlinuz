@@ -59,7 +59,10 @@ endif
 
 install-image:
 	mv chroot/boot/vmlinu?-* $(DESTDIR)/kernel.img; \
-	mv chroot/boot/ubuntu-core-initramfs.img-* $(DESTDIR)/initrd.img; \
+	mv chroot/boot/ubuntu-core-initramfs.img-* $(DESTDIR)/initrd.img
+	if [ -e chroot/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd/info ]; then \
+	  cp chroot/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd/info $(DESTDIR)/snapd-info; \
+	fi
 
 version-check: KERNELVER := $(shell echo $(SNAPCRAFT_PROJECT_VERSION) | cut -f1-4 -d".")
 version-check: KERNELMETAEQ = $(shell for meta in $$(chroot chroot apt-cache show $(KERNELDEB) | awk '/Package:/ {package=$$2} /Version:/ {print package "=" $$2}'); do chroot chroot apt-cache depends $$meta | awk '/$(KERNELPRE)/ {print "'"$$meta"'"}'; done)

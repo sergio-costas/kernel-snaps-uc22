@@ -45,7 +45,8 @@ install-image:
 	  echo "No kernel.efi found, abort"; \
 	  false; \
 	fi; \
-	mv $$KERNEL_EFI $(DESTDIR)/kernel.efi; \
+	mv $$KERNEL_EFI $(DESTDIR)/kernel.efi
+	if [ -e chroot/boot/snapd-info ]; then cp chroot/boot/snapd-info $(DESTDIR); fi
 
 version-check: prepare-kernel
 	echo "KIMGDEB: $(KERNELDEB)"
