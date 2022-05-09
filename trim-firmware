@@ -51,6 +51,13 @@ for d in "${DESTDIR}"/modules/* ; do
 	fi
 done
 
+# If an intel bluetooth firmware is included, include the rest of them
+# LP: #1970819
+if [ -e "${DESTDIR}"/firmware.new/intel/ibt-12-16.sfi ]; then
+    cp "${DESTDIR}"/firmware/intel/ibt-*.sfi "${DESTDIR}"/firmware.new/intel/
+    cp "${DESTDIR}"/firmware/intel/ibt-*.ddc "${DESTDIR}"/firmware.new/intel/
+fi
+
 # Switch to the new firmware directory
 rm -rf "${DESTDIR}"/firmware
 mv "${DESTDIR}"/firmware.new "${DESTDIR}"/firmware
