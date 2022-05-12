@@ -23,8 +23,7 @@ DESTDIR=${1}
 
 # Copy required firmware files to a new directory
 while IFS= read -r fw_file ; do
-	# Note path expansion required, as fw_file can be a wildcard
-	for src_file in $DESTDIR/firmware/$fw_file ; do
+	for src_file in "${DESTDIR}"/firmware/${fw_file} ; do
 		if ! [ -e "${src_file}" ] ; then
 			continue  # Skip non-existing source files
 		fi
@@ -38,6 +37,12 @@ while IFS= read -r fw_file ; do
 		cp "${src_file}" "${dst_dir}"
 	done
 done < <(list_firmware "${DESTDIR}"/modules | sort -u)
+
+# Copy all brcm files, since there might be config files that the kernel
+# doesn't expose via modinfo
+if [ -d "${DESTDIR}"/firmware.new/brcm ] ; then
+	cp "${DESTDIR}"/firmware/brcm/* "${DESTDIR}"/firmware.new/brcm
+fi
 
 # Copy the wifi regulatory database
 if [ -e "${DESTDIR}"/firmware/regulatory.db ] ; then
