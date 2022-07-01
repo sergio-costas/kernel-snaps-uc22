@@ -34,6 +34,8 @@ endif
 	echo "deb http://ppa.launchpad.net/snappy-dev/image/ubuntu $(RELEASE) main" >> chroot/etc/apt/sources.list
 	# Copy the host's trusted.gpg for ubuntu-esm repositories, if any
 	-cp /etc/apt/trusted.gpg chroot/etc/apt/trusted.gpg.d/host-trusted.gpg
+	# Copy the host's trusted.gpg.d snippets, if any (new launchpad-buildd uses these)
+	-cp /etc/apt/trusted.gpg.d/* chroot/etc/apt/trusted.gpg.d/
 
 	# install all updates
 	$(ENV) chroot chroot apt-get -y update
