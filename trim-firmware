@@ -63,6 +63,16 @@ if [ -e "${DESTDIR}"/firmware.new/intel/ibt-12-16.sfi ]; then
     cp "${DESTDIR}"/firmware/intel/ibt-*.ddc "${DESTDIR}"/firmware.new/intel/
 fi
 
+# If a mediatek bluetooth firmware is included, include lots of
+# undeclared BT firmware files for btusb and btqca
+# LP: #1997910
+if [ -e "${DESTDIR}"/firmware.new/mediatek/mt7668pr2h.bin ]; then
+    if [ -e "${DESTDIR}"/firmware/qca ]; then
+        mkdir -p "${DESTDIR}"/firmware.new/qca
+        cp "${DESTDIR}"/firmware/qca/* "${DESTDIR}"/firmware.new/qca/
+    fi
+fi
+
 # Switch to the new firmware directory
 rm -rf "${DESTDIR}"/firmware
 mv "${DESTDIR}"/firmware.new "${DESTDIR}"/firmware
