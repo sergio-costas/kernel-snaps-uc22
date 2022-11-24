@@ -73,6 +73,14 @@ if [ -e "${DESTDIR}"/firmware.new/mediatek/mt7668pr2h.bin ]; then
     fi
 fi
 
+# Undeclared Intel SOF firmware
+if [ -d "${DESTDIR}"/modules/*/kernel/sound/soc/sof/intel/ ] && \
+       [ -d "${DESTDIR}"/firmware/intel/sof ] && \
+       [ -d "${DESTDIR}"/firmware/intel/sof-tplg ]; then
+    cp -r "${DESTDIR}"/firmware/intel/sof "${DESTDIR}"/firmware.new/intel/
+    cp -r "${DESTDIR}"/firmware/intel/sof-tplg "${DESTDIR}"/firmware.new/intel/
+fi
+
 # Switch to the new firmware directory
 rm -rf "${DESTDIR}"/firmware
 mv "${DESTDIR}"/firmware.new "${DESTDIR}"/firmware
