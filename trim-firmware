@@ -100,6 +100,16 @@ if [ -d "${DESTDIR}"/modules/*/kernel/sound/soc/sof/intel/ ] && \
     cp -r "${DESTDIR}"/firmware/intel/sof-tplg "${DESTDIR}"/firmware.new/intel/
 fi
 
+# Undeclared PNVM fallback settings LP: #1999396
+for ucode in "${DESTDIR}"/firmware/iwlwifi-*.ucode; do
+	if [ -e $ucode ]; then
+		pnvm_file=$(basename $ucode | sed -n 's/\(iwlwifi-.*\)-[0-9]*.ucode/\1.pnvm/p')
+		if [ -e "${DESTDIR}"/firmware/$pnvm_file ]; then
+			cp "${DESTDIR}"/firmware/$pnvm_file "${DESTDIR}"/firmware.new/$pnvm_file
+		fi
+	fi
+done
+
 # Switch to the new firmware directory
 rm -rf "${DESTDIR}"/firmware
 mv "${DESTDIR}"/firmware.new "${DESTDIR}"/firmware
