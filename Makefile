@@ -93,6 +93,16 @@ install: install-image
 	# copy modules and firmware
 	cp -a chroot/lib/modules/* $(DESTDIR)/modules/
 	cp -a chroot/lib/firmware/* $(DESTDIR)/firmware/
+
+	# linux-firmware-raspi uses diversions which could result in absolute
+	# symlinks from /lib/firmware/ files to /etc/alternatives/. These
+	# didn't get copied above so we end up with dangling symlinks. Fix that
+	# by following the broken links and copy the target files.
+	find $(DESTDIR)/firmware/ -xtype l | while IFS= read -r fname; do \
+	  target=$$(chroot chroot readlink -e "/lib/$${fname#"$(DESTDIR)"}"); \
+	  cp --remove-destination chroot/"$${target}" "$${fname}"; \
+	done
+
 	# if we ship the rpi3 wlan firmware, copy it to the right dir
 	if [ -d chroot/lib/firmware/brcm80211/brcm ]; then \
 	  mv chroot/lib/firmware/brcm80211/brcm/* $(DESTDIR)/firmware/brcm; \
