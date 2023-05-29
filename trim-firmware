@@ -63,6 +63,12 @@ if [ -d "${DESTDIR}"/firmware.new/brcm ] ; then
 	cp "${DESTDIR}"/firmware/brcm/* "${DESTDIR}"/firmware.new/brcm
 fi
 
+# Copy all AthrBT files, since there might be config files that the kernel
+# doesn't expose via modinfo
+if [ -d "${DESTDIR}"/firmware/ar3k ] ; then
+	cp -a "${DESTDIR}"/firmware/ar3k "${DESTDIR}"/firmware.new/
+fi
+
 # Copy the wifi regulatory database
 if [ -e "${DESTDIR}"/firmware/regulatory.db ] ; then
 	cp "${DESTDIR}"/firmware/regulatory.* "${DESTDIR}"/firmware.new
